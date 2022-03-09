@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-07 15:38:37
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-08 19:58:24
+ * @LastEditTime: 2022-03-09 11:23:43
  */
 /*
 https://docs.nestjs.com/controllers#controllers
@@ -53,6 +53,7 @@ export class FalooController {
     return new Promise(async (resolve, reject) => {
       try {
         const book = new Book();
+
         const { chapterList } = book;
 
         const chapter = new Chapter();
