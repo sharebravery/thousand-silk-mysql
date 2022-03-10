@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-10 09:33:30
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 11:13:43
+ * @LastEditTime: 2022-03-10 14:56:20
  */
 /*
 https://docs.nestjs.com/providers#services
@@ -24,6 +24,8 @@ export class CrawlService {
   constructor(
     @InjectRepository(Book)
     private booksRepository: Repository<Book>,
+    @InjectRepository(Chapter)
+    private chaptersRepository: Repository<Chapter>,
   ) {}
 
   /**
@@ -35,8 +37,8 @@ export class CrawlService {
    * @memberof CrawlController
    */
   async GetHtml(requestUrl: string, requestType?: string): Promise<any> {
-    const s = random(700, 3000);
-    await delay(s); // 控制爬虫速度
+    const ms = random(500, 2100);
+    // await delay(ms); // 控制爬虫速度
 
     return new Promise(async (resolve, reject) => {
       try {
@@ -61,9 +63,14 @@ export class CrawlService {
    * @param {Book} book
    * @memberof CrawlService
    */
-  async SaveBook(book: Book) {
-    console.log('正在保存');
+  async SaveBookAsync(book: Book) {
+    // console.log('正在保存书籍');
     return await this.booksRepository.save(book);
+  }
+
+  async SaveChapterAsync(chapter: Chapter) {
+    // console.log('正在保存章节');
+    return await this.chaptersRepository.save(chapter);
   }
 
   /**
@@ -78,7 +85,7 @@ export class CrawlService {
       writeUrl,
       chapter.title + '\r\n' + chapter.content,
       () => {
-        console.log('写入章节:' + chapter.title);
+        // console.log('写入章节:' + chapter.title);
       },
     );
   }
@@ -100,7 +107,7 @@ export class CrawlService {
           writeUrl,
           chapter.title + '\r\n' + chapter.content,
           () => {
-            console.log('写入章节:' + chapter.title);
+            // console.log('写入章节:' + chapter.title);
           },
         );
       }

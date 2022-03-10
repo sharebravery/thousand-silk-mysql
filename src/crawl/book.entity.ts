@@ -3,37 +3,42 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 09:31:11
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 11:18:23
+ * @LastEditTime: 2022-03-10 15:22:22
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { AuditMetadata } from 'src/entitys/auditMetadata.entity';
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  PrimaryColumn,
+} from 'typeorm';
 import { Chapter } from './chapter.entity';
 
 @Entity()
 export class Book extends AuditMetadata {
-  // @PrimaryGeneratedColumn()
-  // id: number;
-
   @ApiProperty({ description: '书名' })
   @Column()
   name: string;
 
   @ApiProperty({ description: '书籍地址' })
-  @Column()
+  @PrimaryColumn()
   url: string;
 
   @ApiProperty({ description: '简介' })
   @Column('text')
   introduction: string;
 
-  @ApiProperty({ description: '简介分段存储' })
-  introductionItems: Array<string> = [];
+  introductionItems: Array<string> = []; // 简介分段存储
 
-  @ApiProperty({ description: '章节目录' })
-  chaptersDirectoryList: Array<Directory> = [];
+  @ApiProperty({ description: '简介分段存储Json格式' })
+  @Column('json')
+  introductionItemsJson: string;
 
-  @ApiProperty({ description: '章节存储Json格式' })
+  chaptersDirectoryList: Array<Directory> = []; // 章节目录
+
+  @ApiProperty({ description: '章节目录存储Json格式' })
   @Column('json')
   chaptersDirectoryJson: string;
 
