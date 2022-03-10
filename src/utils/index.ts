@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 15:31:46
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-09 17:47:46
+ * @LastEditTime: 2022-03-09 20:03:11
  */
 // export class Utils {
 function del(str, target) {
@@ -19,4 +19,8 @@ function del(str, target) {
  */
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function random(min, max) {
+  return Math.ceil(Math.random() * (max - min)) + min;
 }

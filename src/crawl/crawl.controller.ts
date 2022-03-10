@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 08:47:38
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-09 18:06:25
+ * @LastEditTime: 2022-03-10 10:38:01
  */
 /*
 https://docs.nestjs.com/controllers#controllers
@@ -20,9 +20,12 @@ import { Book, Directory } from './book.entity';
 
 import async = require('async');
 import { Chapter } from './chapter.entity';
-import { delay } from 'src/utils';
+import { delay, random } from 'src/utils';
+import { CrawlService } from './crawl.service';
 
 const REQUEST_BASEURL = 'https://b.faloo.com/'; // 抓取基本地址
+
+const WRITE_BASEURL = './src/database/'; // 写入文件基本路径
 
 const BOOK_URL_LIST: Array<string> = [
   'https://b.faloo.com/1110752.html',
@@ -32,15 +35,45 @@ const BOOK_URL_LIST: Array<string> = [
 @Controller('Crawl')
 @ApiTags('CrawlController')
 export class CrawlController {
+  constructor(private readonly crawlService: CrawlService) {}
+
   /**
    *启动爬虫
-   * @return {*}
+   *
+   * @param {*} chapter
+   * @param {*} callback
    * @memberof CrawlController
    */
+  @ApiOperation({
+    description: '启动爬虫',
+  })
   @Get('startCrawlBook')
-  async startCrawlBook(): Promise<Book[]> {
-    console.log('[ 开始抓取 ]-136');
-    return await this.CrawlBook(BOOK_URL_LIST);
+  async startCrawlBook() {
+    console.log('[ 开始抓取 ]-52');
+
+    const books = await this.CrawlBook(BOOK_URL_LIST); // 书籍基本信息
+
+    for (let i = 0; i < books.length; i++) {
+      const book = books[i];
+
+      // 写入书名
+      await fs.writeFileSync(
+        WRITE_BASEURL + `${book.name}.txt`,
+        book.name + '\r\r\n',
+      );
+
+      const chapters = await this.analyticalChapterContent(book);
+      book.chapters = chapters;
+
+      book.chaptersDirectoryJson = JSON.stringify(chapters);
+
+      await this.crawlService.SaveBook(book);
+    }
+
+    // this.writeAllFileSync(books); // 一并写入
+    console.log('[ 爬虫运行完毕 ]-72');
+
+    return books;
   }
 
   /**
@@ -49,7 +82,6 @@ export class CrawlController {
    * @return {*}
    * @memberof CrawlController
    */
-  // @Get('CrawlBook')
   async CrawlBook(bookList: Array<string>): Promise<Book[]> {
     return new Promise(async (resolve, reject) => {
       const data = [];
@@ -82,31 +114,6 @@ export class CrawlController {
   }
 
   /**
-   *获取html页面
-   * @param {string} requestUrl
-   * @param {string} [requestType]
-   * @return {*}  {Promise<any>}
-   * @memberof CrawlController
-   */
-  async GetHtml(requestUrl: string, requestType?: string): Promise<any> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        const result = await (request(requestType ?? 'GET', requestUrl) as any)
-          .charset('gb2312')
-          .set('Referer', 'https://b.faloo.com/')
-          .set(
-            'User-Agent',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36',
-          )
-          .buffer(true);
-        resolve(result.text);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  /**
    * 获取书籍基本信息、抓取目录
    * @param url
    * @param callback
@@ -117,14 +124,14 @@ export class CrawlController {
 
     return new Promise(async (resolve, reject) => {
       try {
-        const html = await this.GetHtml(url);
+        const html = await this.crawlService.GetHtml(url);
 
         const $ = cheerio.load(html); // 装载页面
 
         // 书名
         const name = $('#novelName').text();
         book.name = name;
-        // console.log('[ 当前抓取书名 ]-68', book.name);
+        console.log('[ 当前抓取书籍 ]-68', book.name);
 
         // 简介
         const introduction = $('.C-Two p');
@@ -143,18 +150,16 @@ export class CrawlController {
         const directory = $('.C-Fo-Zuo a');
 
         directory.each((i, el) => {
-          if (i > 1) {
-            const directory = new Directory();
+          const directory = new Directory();
 
-            const a = $(el).attr('title');
+          const a = $(el).attr('title');
 
-            const url = 'https:' + $(el).attr('href');
+          const url = 'https:' + $(el).attr('href');
 
-            directory.title = a;
+          directory.title = a;
 
-            directory.url = url;
-            if (a) book.chaptersDirectoryList.push(directory);
-          }
+          directory.url = url;
+          if (a) book.chaptersDirectoryList.push(directory);
         });
 
         resolve(book);
@@ -165,47 +170,26 @@ export class CrawlController {
   }
 
   /**
-   *根据书籍目录抓取章节内容
-   *
-   * @param {*} chapter
-   * @param {*} callback
-   * @memberof CrawlController
-   */
-  @ApiOperation({
-    description: '抓取章节内容',
-  })
-  @Get('CrawChapterDirectory')
-  async CrawChapterDirectory(chapters, callback) {
-    const books = await this.startCrawlBook();
-
-    for (let i = 0; i < books.length; i++) {
-      const book = books[i];
-      const chapters = await this.analyticalChapterContent(
-        book.chaptersDirectoryList,
-      );
-      book.chapters = chapters;
-    }
-
-    return books;
-  }
-
-  /**
    *解析存入章节内容
    *
    * @param {*} chapters
    * @return {*}
    * @memberof CrawlController
    */
-  analyticalChapterContent(list: Directory[]): Promise<Chapter[]> {
+  analyticalChapterContent(book: Book): Promise<Chapter[]> {
+    const { chaptersDirectoryList } = book;
+
     return new Promise(async (resolve, reject) => {
       const chapters: Chapter[] = [];
       try {
         for (let i = 0; i < 3; i++) {
-          const item = list[i];
+          // for (let i = 0; i < chaptersDirectoryList.length; i++) {
+          const item = chaptersDirectoryList[i];
 
           const chapter = new Chapter();
 
-          const html = await this.GetHtml(item.url);
+          console.log(' [  正在抓取 ]-216', item.title);
+          const html = await this.crawlService.GetHtml(item.url);
 
           const $ = cheerio.load(html); // 装载页面
 
@@ -213,7 +197,6 @@ export class CrawlController {
           const name = $('#novelName').text();
           const title = $('.c_l_title h1').text().replace(name, '').trim();
           chapter.title = title;
-          console.log(' [  正在抓取 ]-216', title);
 
           const content = $('.noveContent');
           chapter.content = content.text(); // 存入完整字符串内容
@@ -227,7 +210,11 @@ export class CrawlController {
 
           chapters.push(chapter);
 
-          delay(5000);
+          //写入章节
+          await this.crawlService.SaveChapter(
+            chapter,
+            WRITE_BASEURL + `${book.name}.txt`,
+          );
         }
 
         resolve(chapters);
@@ -237,11 +224,7 @@ export class CrawlController {
     });
   }
 
-  // writeFileSync(books) {
-  //   console.log(
-  //     '%c [ books ]-241',
-  //     'font-size:13px; background:pink; color:#bf2c9f;',
-  //     books,
-  //   );
+  // async SaveBook(book) {
+  //   await this.crawlService.SaveBook(book);
   // }
 }

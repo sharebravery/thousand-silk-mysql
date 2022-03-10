@@ -3,14 +3,14 @@
  * @Author: sharebravery
  * @Date: 2022-03-08 09:52:43
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-09 15:27:03
+ * @LastEditTime: 2022-03-10 09:46:02
  */
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { CrawlController } from './crawl/crawl.controller';
 
-const crawlController = new CrawlController();
+// const crawlController = new CrawlController();
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -27,6 +27,6 @@ async function bootstrap() {
   console.log('[ TARGET ]   ' + 'http://localhost:3000/api');
   await app.listen(3000);
 
-  crawlController.startCrawlBook();
+  // crawlController.startCrawlBook();
 }
 bootstrap();
