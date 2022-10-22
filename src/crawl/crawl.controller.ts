@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 08:47:38
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 14:52:06
+ * @LastEditTime: 2022-03-12 22:39:02
  */
 /*
 https://docs.nestjs.com/controllers#controllers
@@ -22,6 +22,8 @@ import async = require('async');
 import { Chapter } from './chapter.entity';
 import { delay, random } from 'src/utils';
 import { CrawlService } from './crawl.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 const REQUEST_BASEURL = 'https://b.faloo.com/'; // 抓取基本地址
 
@@ -36,7 +38,18 @@ const BOOK_URL_LIST: Array<string> = [
 @Controller('Crawl')
 @ApiTags('CrawlController')
 export class CrawlController {
-  constructor(private readonly crawlService: CrawlService) {}
+  constructor(
+    private readonly crawlService: CrawlService,
+    @InjectRepository(Book)
+    private booksRepository: Repository<Book>,
+  ) {}
+
+  // TODO:  引入IP池
+  // TODO:  控制并发
+  // TODO:  爬虫伪装
+  // TODO:  断点续传
+  // TODO:  自动抓取书籍列表
+  // TODO:  外部接口
 
   /**
    *启动爬虫
@@ -46,7 +59,7 @@ export class CrawlController {
    * @memberof CrawlController
    */
   @ApiOperation({
-    description: '启动爬虫',
+    summary: '启动爬虫',
   })
   @Get('startCrawlBook')
   async startCrawlBook() {
@@ -64,12 +77,14 @@ export class CrawlController {
           book.name + '\r\r\n',
         );
 
+        const chapters = await this.analyticalChapterContent(book);
+
+        book.chapters = chapters;
+
+        book.chaptersJson = JSON.stringify(chapters);
         book.introductionItemsJson = JSON.stringify(book.introductionItems);
         book.chaptersDirectoryJson = JSON.stringify(book.chaptersDirectoryList);
         await this.crawlService.SaveBookAsync(book); // 保存书籍进入数据库
-
-        const chapters = await this.analyticalChapterContent(book);
-        book.chapters = chapters;
       }
 
       // this.writeAllFileSync(books); // 一并写入
@@ -191,13 +206,27 @@ export class CrawlController {
     return new Promise(async (resolve, reject) => {
       const chapters: Chapter[] = [];
       try {
+        const bookInfo = await this.booksRepository.findOne(book.url); // 查询书籍
+
         for (let i = 0; i < 3; i++) {
           // for (let i = 0; i < chaptersDirectoryList.length; i++) {
           const item = chaptersDirectoryList[i];
 
+          if (
+            bookInfo?.chaptersJson &&
+            (JSON.parse(JSON.stringify(bookInfo.chaptersJson)) as Chapter[])
+              .map((o) => o.url)
+              .includes(item.url)
+          ) {
+            console.log(item.title, '-章节已存在');
+
+            continue; // 如果数据库内存在 则跳过
+          }
+
           const chapter = new Chapter();
 
           console.log(' [  正在抓取 ]-198', item.title);
+
           const html = await this.crawlService.GetHtml(item.url);
 
           const $ = cheerio.load(html); // 装载页面

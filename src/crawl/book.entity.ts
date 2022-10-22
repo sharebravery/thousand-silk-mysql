@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 09:31:11
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 15:22:22
+ * @LastEditTime: 2022-03-12 22:34:06
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { AuditMetadata } from 'src/entitys/auditMetadata.entity';
@@ -46,9 +46,13 @@ export class Book extends AuditMetadata {
   @Column({ nullable: true })
   author: string;
 
-  @ApiProperty({ description: '章节信息' })
-  @OneToMany((type) => Chapter, (chapter) => chapter)
+  // @ApiProperty({ description: '章节信息' })
+  // @OneToMany((type) => Chapter, (chapter) => chapter)
   chapters: Chapter[];
+
+  @ApiProperty({ description: '章节信息存储Json格式' })
+  @Column('json')
+  chaptersJson: string;
 }
 
 export class Directory {

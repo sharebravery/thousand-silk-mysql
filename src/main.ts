@@ -24,8 +24,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  console.log('[ TARGET ]   ' + 'http://localhost:3000/api');
   await app.listen(3000);
+
+  console.log('[ TARGET ]   ' + 'http://localhost:3000/api');
 
   // crawlController.startCrawlBook();
 }

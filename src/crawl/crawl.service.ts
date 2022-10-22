@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-10 09:33:30
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 14:56:20
+ * @LastEditTime: 2022-03-11 16:20:09
  */
 /*
 https://docs.nestjs.com/providers#services
@@ -14,10 +14,18 @@ import { Chapter } from './chapter.entity';
 import fs = require('fs');
 import { delay, random } from 'src/utils';
 import request = require('superagent');
+
+import superagentProxy = require('superagent-proxy');
+superagentProxy(request);
+
 import charset = require('superagent-charset');
+charset(request);
+
 import { Book } from './book.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+import { Proxy } from 'src/proxy/proxy.entity';
 
 @Injectable()
 export class CrawlService {
@@ -26,7 +34,17 @@ export class CrawlService {
     private booksRepository: Repository<Book>,
     @InjectRepository(Chapter)
     private chaptersRepository: Repository<Chapter>,
+    @InjectRepository(Proxy)
+    private proxyRepository: Repository<Proxy>,
   ) {}
+
+  private time = 0;
+
+  proxy = null;
+
+  timer = null;
+
+  timeoutNumber = 0;
 
   /**
    *获取html页面
@@ -36,20 +54,53 @@ export class CrawlService {
    * @return {*}  {Promise<any>}
    * @memberof CrawlController
    */
-  async GetHtml(requestUrl: string, requestType?: string): Promise<any> {
-    const ms = random(500, 2100);
+  async GetHtml(requestUrl: string): Promise<any> {
+    // const ms = random(500, 2100);
     // await delay(ms); // 控制爬虫速度
+
+    // if (this.timer) clearInterval(this.timer);
+
+    // if (this.time === 0) {
+    //   let randomIps: Proxy[] = await this.proxyRepository.find();
+    //   // let randomIps: Proxy[] = await this.proxyRepository.query(
+    //   //   'SELECT * FROM proxy ORDER BY  RAND() LIMIT 100;',
+    //   // );
+
+    //   // randomIps = randomIps.filter(
+    //   //   (o) => o.speed < 500 && o.protocols.includes('http'),
+    //   // );
+    //   randomIps = randomIps.filter((o) => o.country === 'CN');
+    //   this.proxy = `${randomIps[0].protocols[0]}://${randomIps[0].ip}:${randomIps[0].port}`;
+    // }
+
+    // this.timer = setInterval(() => {
+    //   this.time++;
+    //   if (this.time === 1000 * 60 * 30) this.time = 0;
+    // }, 1000);
+
+    this.proxy = `http://124.204.33.162:8000`;
+    console.log(
+      '%c [     this.proxy ]-83',
+      'font-size:13px; background:pink; color:#bf2c9f;',
+      this.proxy,
+    );
 
     return new Promise(async (resolve, reject) => {
       try {
-        const result = await (request(requestType ?? 'GET', requestUrl) as any)
+        const result = await (request('GET', requestUrl) as any)
           .charset('gb2312')
+          .proxy(this.proxy)
           .set('Referer', 'https://b.faloo.com/')
+          .buffer(true)
           .set(
             'User-Agent',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.115 Safari/537.36',
           )
-          .buffer(true);
+          .timeout({
+            response: 50000, // Wait 5 seconds for the server to start sending,
+            deadline: 60000, // but allow 1 minute for the file to finish loading.
+          });
+
         resolve(result.text);
       } catch (err) {
         reject(err);

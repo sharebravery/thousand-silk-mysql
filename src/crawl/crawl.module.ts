@@ -15,9 +15,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Book } from './book.entity';
 import { Chapter } from './chapter.entity';
+import { Proxy } from 'src/proxy/proxy.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Book, Chapter])],
+  imports: [TypeOrmModule.forFeature([Book, Chapter, Proxy])],
   controllers: [CrawlController],
   providers: [CrawlService],
 })

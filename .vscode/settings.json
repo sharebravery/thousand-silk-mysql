@@ -1,3 +1,35 @@
 {
-  "cSpell.words": ["Faloo"]
+  "cSpell.words": ["Faloo"],
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#f3f575",
+    "activityBar.background": "#f3f575",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#0db0b2",
+    "activityBarBadge.foreground": "#ffffff",
+    "commandCenter.border": "#15202b99",
+    "panel.border": "#f3f575",
+    "sash.hoverBorder": "#f3f575",
+    "statusBar.background": "#eff245",
+    "statusBar.border": "#eff245",
+    "statusBar.debuggingBackground": "#4845f2",
+    "statusBar.debuggingBorder": "#4845f2",
+    "statusBar.debuggingForeground": "#ffffff",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#ebef15",
+    "statusBarItem.remoteBackground": "#eff245",
+    "statusBarItem.remoteForeground": "#15202b",
+    "tab.activeBorder": "#f3f575",
+    "titleBar.activeBackground": "#eff245",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.border": "#eff245",
+    "titleBar.inactiveBackground": "#eff24599",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#eff245",
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": true,
+    "strings": true
+  }
 }

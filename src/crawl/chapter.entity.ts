@@ -3,7 +3,7 @@
  * @Author: sharebravery
  * @Date: 2022-03-09 09:48:19
  * @LastEditors: sharebravery
- * @LastEditTime: 2022-03-10 15:17:19
+ * @LastEditTime: 2022-03-12 22:22:58
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { AuditMetadata } from 'src/entitys/auditMetadata.entity';
@@ -19,13 +19,13 @@ import {
 
 @Entity()
 export class Chapter extends AuditMetadata {
-  @ApiProperty({ description: '章节标题' })
-  @Column()
-  title: string;
-
   @ApiProperty({ description: '章节地址' })
   @PrimaryColumn()
   url: string;
+
+  @ApiProperty({ description: '章节标题' })
+  @Column()
+  title: string;
 
   @ApiProperty({ description: '章节内容' })
   @Column('text')
